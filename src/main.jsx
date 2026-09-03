@@ -142,18 +142,29 @@ function WireframeLive() {
   </div>
 }
 
+function ImageLightbox({ src, alt, onClose }) {
+  useEffect(() => {
+    const closeOnEscape = event => event.key === 'Escape' && onClose()
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [onClose])
+
+  return <div className="modal" role="dialog" aria-modal="true" aria-label={`${alt} 확대 이미지`} onClick={onClose}>
+    <button className="modal-close" onClick={onClose} aria-label="확대 이미지 닫기">×</button>
+    <img src={src} alt={alt} onClick={event=>event.stopPropagation()}/>
+  </div>
+}
+
 function ScreenshotLive({ file, eyebrow, title, note }) {
   const [open, setOpen] = useState(false)
+  const src = `${import.meta.env.BASE_URL}screens/${file}`
   return <div className="screenshot-live">
     <p className="eyebrow">{eyebrow}</p><h3>{title}</h3>
     <button className="screen-button" onClick={()=>setOpen(true)} aria-label={`${title} 크게 보기`}>
-      <img src={`${import.meta.env.BASE_URL}screens/${file}`} alt={title}/><span>크게 보기 ↗</span>
+      <img src={src} alt={title}/><span>크게 보기 ↗</span>
     </button>
     <p className="screen-note">{note}</p>
-    {open && <div className="modal" role="dialog" aria-modal="true" onClick={()=>setOpen(false)}>
-      <button className="modal-close" onClick={()=>setOpen(false)} aria-label="닫기">×</button>
-      <img src={`${import.meta.env.BASE_URL}screens/${file}`} alt={title}/>
-    </div>}
+    {open && <ImageLightbox src={src} alt={title} onClose={()=>setOpen(false)}/>} 
   </div>
 }
 
@@ -175,22 +186,34 @@ function InteractionLive() {
 
 function RefineLive() {
   const [view, setView] = useState('timeline')
-  const file = view==='timeline'?'hokkaido-timeline.jpg':'hokkaido-ryokan.jpg'
+  const [open, setOpen] = useState(false)
+  const isTimeline = view === 'timeline'
+  const file = isTimeline ? 'hokkaido-timeline.jpg' : 'hokkaido-final.jpg'
+  const title = isTimeline ? '장소별 상세 동선 화면' : '료칸 4곳 비교·후기 화면'
+  const src = `${import.meta.env.BASE_URL}screens/${file}`
   return <div className="refine-live">
-    <div className="segmented"><button className={view==='timeline'?'active':''} onClick={()=>setView('timeline')}>장소 상세</button><button className={view==='ryokan'?'active':''} onClick={()=>setView('ryokan')}>료칸 근거</button></div>
-    <img src={`${import.meta.env.BASE_URL}screens/${file}`} alt="세부 정보가 보강된 실제 여행 앱 화면"/>
-    <div className="annotation"><b>+</b><span>공식 정보 · 지도 · 한국어 후기 링크를 필요한 위치에서 바로 확인</span></div>
+    <div className="segmented"><button className={isTimeline?'active':''} onClick={()=>setView('timeline')}>장소 상세</button><button className={!isTimeline?'active':''} onClick={()=>setView('ryokan')}>료칸 비교·후기</button></div>
+    <button className="zoomable-image" onClick={()=>setOpen(true)} aria-label={`${title} 크게 보기`}>
+      <img src={src} alt={title}/><span>확대해서 보기 ↗</span>
+    </button>
+    <div className="annotation"><b>+</b><span>{isTimeline ? '일정 안에서 장소별 세부 동선과 한국어 후기를 바로 확인' : '료칸별 평가와 예약·한국어 후기 링크를 한 화면에서 비교'}</span></div>
+    {open && <ImageLightbox src={src} alt={title} onClose={()=>setOpen(false)}/>} 
   </div>
 }
 
 function OutcomeLive() {
   const files = ['hokkaido-hero.jpg','hokkaido-timeline.jpg','hokkaido-ryokan.jpg','hokkaido-final.jpg']
   const [index,setIndex] = useState(0)
+  const [open,setOpen] = useState(false)
+  const src = `${import.meta.env.BASE_URL}screens/${files[index]}`
   return <div className="outcome-live">
     <p className="eyebrow">FINAL RESULT</p><div className="outcome-head"><h3>하나의 대화에서<br/>선택 가능한 여행으로</h3><span>{index+1} / {files.length}</span></div>
-    <img src={`${import.meta.env.BASE_URL}screens/${files[index]}`} alt="완성된 홋카이도 여행 플래너 화면"/>
+    <button className="zoomable-image" onClick={()=>setOpen(true)} aria-label={`${index+1}번 완성 화면 크게 보기`}>
+      <img src={src} alt={`${index+1}번 완성된 홋카이도 여행 플래너 화면`}/><span>확대해서 보기 ↗</span>
+    </button>
     <div className="gallery-controls"><button onClick={()=>setIndex((index+files.length-1)%files.length)} aria-label="이전 화면">←</button><div>{files.map((_,i)=><button key={i} className={i===index?'active':''} onClick={()=>setIndex(i)} aria-label={`${i+1}번 화면`}/>)}</div><button onClick={()=>setIndex((index+1)%files.length)} aria-label="다음 화면">→</button></div>
     <a className="open-live" href={LIVE_APP} target="_blank" rel="noreferrer">완성된 여행 플래너 열기 ↗</a>
+    {open && <ImageLightbox src={src} alt={`${index+1}번 완성 화면`} onClose={()=>setOpen(false)}/>} 
   </div>
 }
 
